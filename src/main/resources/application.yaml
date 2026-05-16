@@ -1,3 +1,9 @@
 spring:
   application:
     name: news-aggregator-adv-v1
+  profiles:
+    active: dev
+
+logging:
+  level:
+    root: info
