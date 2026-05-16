@@ -15,7 +15,7 @@ services:
     ports:
       - "27017:27017"
     environment:
-      - MONGO_INITDB_DATABASE=monew # 초기 생성될 데이터베이스 이름
+      - MONGO_INITDB_DATABASE=news_aggregator # 초기 생성될 데이터베이스 이름
 
   kafka:
     image: apache/kafka:3.7.0 # Apache 공식 이미지로 변경
