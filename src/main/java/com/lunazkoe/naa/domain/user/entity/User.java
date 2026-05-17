@@ -1,7 +1,5 @@
 package com.lunazkoe.naa.domain.user.entity;
 
-import static com.lunazkoe.naa.global.entity.BaseSoftDeleteEntity.IS_DELETED_FALSE_ONLY;
-
 import com.lunazkoe.naa.global.entity.BaseSoftDeleteEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,13 +11,12 @@ import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@SQLRestriction(IS_DELETED_FALSE_ONLY)
+//@SQLRestriction(IS_DELETED_FALSE_ONLY)
 // TODO: 회원가입 / 로그인 시에만 email로 검색 => 인덱스를 걸지 말지 고민중
 public class User extends BaseSoftDeleteEntity {
 

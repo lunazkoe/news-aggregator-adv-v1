@@ -72,6 +72,10 @@ public class InterestService {
         List<InterestDto> interests = pageResponse.content().stream()
                 .map(interest -> {
                     boolean subscribedByMe = subscribedInterestIds.contains(interest.getId());
+//                    boolean subscribedByMe = subscriptionRepository.existsByInterestIdAndUserId(
+//                            interest.getId(), requestUserId);
+//                    boolean subscribedByMe = subscriptionRepository.existsInterestIdAndUserId(
+//                            interest.getId(), requestUserId);
                     return InterestDto.from(interest, subscribedByMe);
                 })
                 .toList();
