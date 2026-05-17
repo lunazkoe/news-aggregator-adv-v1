@@ -1,7 +1,11 @@
 package com.lunazkoe.naa.global.error;
 
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -17,6 +21,26 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
                 .body(ErrorResponse.of(e));
+    }
+
+    @ExceptionHandler(BindException.class)
+    public ResponseEntity<ErrorResponse> handleValidationException(BindException e) {
+        Map<String, Object> details = e.getBindingResult().getFieldErrors().stream()
+                .collect(Collectors.toMap(
+                        FieldError::getField,
+                        FieldError::getDefaultMessage,
+                        // 만약 동일한 필드에 여러 에러가 발생할 경우 메시지를 콤마로 연결
+                        (existingMessage, newMessage) -> existingMessage + ", " + newMessage
+                ));
+        DomainException domainException = new DomainException(GlobalErrorCode.INVALID_INPUT_VALUE,
+                details);
+
+        ErrorCode errorCode = domainException.getErrorCode();
+        log.warn("[ValidationException] Code:{} Message: {}", errorCode.getCode(),
+                errorCode.getMessage());
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(ErrorResponse.of(domainException));
     }
 
     @ExceptionHandler(Exception.class)
