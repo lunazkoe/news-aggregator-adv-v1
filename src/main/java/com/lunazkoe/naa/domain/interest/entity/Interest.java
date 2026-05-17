@@ -16,6 +16,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+// TODO: 조회 빈도에 따른 인덱스
 @Entity
 @Table(name = "interests")
 @Getter
@@ -34,16 +35,28 @@ public class Interest extends BaseTimeEntity {
     private List<String> keywords = new ArrayList<>();
 
     @Column(name = "subscriber_count", nullable = false)
-    private Integer subscriberCount = 0;
+    private Long subscriberCount = 0L;
 
     public Interest(String name, List<String> keywords) {
         this.name = name;
         this.keywords = keywords != null ? keywords : new ArrayList<>();
-        this.subscriberCount = 0;
+        this.subscriberCount = 0L;
     }
 
+    // TODO: 키워드 업데이트 로직을 어떻게 하는 것이 좋을지 알아보고 선택하기
     public void updateKeywords(List<String> keywords) {
         this.keywords = keywords;
     }
 
+    public void increaseSubscriberCount() {
+        if (this.subscriberCount < Long.MAX_VALUE) {
+            this.subscriberCount++;
+        }
+    }
+
+    public void decreaseSubscriberCount() {
+        if (this.subscriberCount > 0) {
+            this.subscriberCount--;
+        }
+    }
 }

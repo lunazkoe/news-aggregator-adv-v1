@@ -8,7 +8,7 @@ public record InterestDto(
         UUID id,
         String name,
         List<String> keywords,
-        Integer subscriberCount,
+        Long subscriberCount,
         Boolean subscribedByMe
 ) {
 
