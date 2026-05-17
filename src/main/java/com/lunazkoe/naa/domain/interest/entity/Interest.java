@@ -42,4 +42,8 @@ public class Interest extends BaseTimeEntity {
         this.subscriberCount = 0;
     }
 
+    public void updateKeywords(List<String> keywords) {
+        this.keywords = keywords;
+    }
+
 }
