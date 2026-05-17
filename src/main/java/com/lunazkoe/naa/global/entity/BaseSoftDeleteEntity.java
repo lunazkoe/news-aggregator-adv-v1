@@ -1,0 +1,25 @@
+package com.lunazkoe.naa.global.entity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.MappedSuperclass;
+import java.time.LocalDateTime;
+import lombok.Getter;
+
+
+@MappedSuperclass
+@Getter
+public abstract class BaseSoftDeleteEntity extends BaseTimeEntity {
+
+    public static final String IS_DELETED_FALSE_ONLY = "is_deleted = false";
+
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = true;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    public void softDelete() {
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
+    }
+}
