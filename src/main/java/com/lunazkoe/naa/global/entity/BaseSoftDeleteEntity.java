@@ -13,7 +13,7 @@ public abstract class BaseSoftDeleteEntity extends BaseTimeEntity {
     public static final String IS_DELETED_FALSE_ONLY = "is_deleted = false";
 
     @Column(name = "is_deleted", nullable = false)
-    private boolean isDeleted = true;
+    private boolean isDeleted = false;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
