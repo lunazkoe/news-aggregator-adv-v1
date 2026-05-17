@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+@Schema(description = "회원가입 정보")
 public record UserRegisterRequest(
         @Schema(description = "가입 이메일")
         @NotBlank(message = "이메일은 필수 입력 값입니다.")

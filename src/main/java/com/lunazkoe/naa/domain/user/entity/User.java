@@ -20,6 +20,7 @@ import org.hibernate.annotations.SQLRestriction;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @SQLRestriction(IS_DELETED_FALSE_ONLY)
+// TODO: 회원가입 / 로그인 시에만 email로 검색 => 인덱스를 걸지 말지 고민중
 public class User extends BaseSoftDeleteEntity {
 
     @Id
@@ -39,5 +40,9 @@ public class User extends BaseSoftDeleteEntity {
         this.email = email;
         this.nickname = nickname;
         this.password = password;
+    }
+
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
     }
 }
