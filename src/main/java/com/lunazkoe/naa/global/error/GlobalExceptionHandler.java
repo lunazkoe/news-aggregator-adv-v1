@@ -43,6 +43,16 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of(domainException));
     }
 
+    @ExceptionHandler(DomainException.class)
+    public ResponseEntity<ErrorResponse> handleDomainException(DomainException e) {
+        ErrorCode errorCode = e.getErrorCode();
+        log.warn("[ValidationException] Code:{} Message: {}", errorCode.getCode(),
+                errorCode.getMessage());
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(ErrorResponse.of(e));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception e) {
         log.error("[UnhandledException] Message: {}", e.getMessage(), e);

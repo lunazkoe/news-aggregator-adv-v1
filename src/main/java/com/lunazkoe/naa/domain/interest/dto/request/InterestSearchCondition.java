@@ -1,10 +1,13 @@
 package com.lunazkoe.naa.domain.interest.dto.request;
 
 
+import com.lunazkoe.naa.global.error.DomainException;
+import com.lunazkoe.naa.global.error.GlobalErrorCode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
+import java.util.Map;
 
 @Schema(description = "관심사 목록 조회용")
 public record InterestSearchCondition(
@@ -41,6 +44,15 @@ public record InterestSearchCondition(
         }
         if (direction == null || direction.isBlank()) {
             direction = "DESC";
+        }
+
+        if (after != null && !after.isBlank() && "subscriberCount".equals(orderBy)) {
+            try {
+                Long.parseLong(after);
+            } catch (NumberFormatException e) {
+                throw new DomainException(GlobalErrorCode.INVALID_INPUT_VALUE,
+                        Map.of("after", "subscriberCount 정렬 시 after 커서는 반드시 숫자여야 합니다."));
+            }
         }
     }
 }
