@@ -20,6 +20,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLRestriction;
 
+// TODO: 조회 빈도에 따른 인덱스 생성
+
 @Entity
 @Table(name = "comments")
 @Getter
@@ -56,6 +58,7 @@ public class Comment extends BaseSoftDeleteEntity {
         this.content = content;
     }
 
+    // TODO: increase / decrease 동시성
     public void increaseCommentLikeCount() {
         if (this.likeCount < Long.MAX_VALUE) {
             this.likeCount++;

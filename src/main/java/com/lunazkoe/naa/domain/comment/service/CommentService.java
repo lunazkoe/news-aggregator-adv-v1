@@ -30,9 +30,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-// TODO: 동시성 문제
-// TODO: 권한 인증 문제
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -54,6 +51,7 @@ public class CommentService {
             throw new ArticleException(ArticleErrorCode.ARTICLE_NOT_FOUND);
         }
 
+        log.info("댓글 목록 조회 시작.");
         CursorPageResponse<Comment> pageResponse = commentRepository.searchComments(
                 condition);
 
