@@ -5,6 +5,7 @@ import static com.lunazkoe.naa.global.filter.MDCLoggingFilter.HEADER_USER_ID;
 import com.lunazkoe.naa.domain.comment.dto.request.CommentRegisterRequest;
 import com.lunazkoe.naa.domain.comment.dto.request.CommentUpdateRequest;
 import com.lunazkoe.naa.domain.comment.dto.response.CommentDto;
+import com.lunazkoe.naa.domain.comment.dto.response.CommentLikeDto;
 import com.lunazkoe.naa.domain.comment.service.CommentService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -35,6 +36,22 @@ public class CommentController {
     @ResponseStatus(HttpStatus.CREATED)
     public CommentDto registerComment(@Valid @RequestBody CommentRegisterRequest request) {
         return commentService.createComment(request);
+    }
+
+    @Operation(summary = "관심사 댓글 좋아요", description = "댓글 좋아요를 등록합니다.")
+    @PostMapping("/{commentId}/comment-likes")
+    @ResponseStatus(HttpStatus.OK)
+    public CommentLikeDto createCommentLike(@PathVariable UUID commentId,
+            @RequestHeader(HEADER_USER_ID) UUID requestUserId) {
+        return commentService.createCommentLike(commentId, requestUserId);
+    }
+
+    @Operation(summary = "댓글 좋아요 취소", description = "댓글 좋아요를 취소합니다.")
+    @DeleteMapping("/{commentId}/comment-likes")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cancelCommentLike(@PathVariable UUID commentId,
+            @RequestHeader(HEADER_USER_ID) UUID requestUserId) {
+        commentService.cancelCommentLike(commentId, requestUserId);
     }
 
     @Operation(summary = "댓글 논리 삭제", description = "댓글을 논리적으로 삭제합니다.")

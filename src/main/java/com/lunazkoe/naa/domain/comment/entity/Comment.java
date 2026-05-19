@@ -55,4 +55,16 @@ public class Comment extends BaseSoftDeleteEntity {
     public void updateContent(String content) {
         this.content = content;
     }
+
+    public void increaseCommentLikeCount() {
+        if (this.likeCount < Long.MAX_VALUE) {
+            this.likeCount++;
+        }
+    }
+
+    public void decreaseCommentLikeCount() {
+        if (this.likeCount > 0) {
+            this.likeCount--;
+        }
+    }
 }

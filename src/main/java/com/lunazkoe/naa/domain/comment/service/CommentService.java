@@ -7,14 +7,18 @@ import com.lunazkoe.naa.domain.article.repository.ArticleRepository;
 import com.lunazkoe.naa.domain.comment.dto.request.CommentRegisterRequest;
 import com.lunazkoe.naa.domain.comment.dto.request.CommentUpdateRequest;
 import com.lunazkoe.naa.domain.comment.dto.response.CommentDto;
+import com.lunazkoe.naa.domain.comment.dto.response.CommentLikeDto;
 import com.lunazkoe.naa.domain.comment.entity.Comment;
+import com.lunazkoe.naa.domain.comment.entity.CommentLike;
 import com.lunazkoe.naa.domain.comment.exception.CommentErrorCode;
 import com.lunazkoe.naa.domain.comment.exception.CommentException;
+import com.lunazkoe.naa.domain.comment.repository.CommentLikeRepository;
 import com.lunazkoe.naa.domain.comment.repository.CommentRepository;
 import com.lunazkoe.naa.domain.user.entity.User;
 import com.lunazkoe.naa.domain.user.exception.UserErrorCode;
 import com.lunazkoe.naa.domain.user.exception.UserException;
 import com.lunazkoe.naa.domain.user.repository.UserRepository;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,9 +36,10 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final ArticleRepository articleRepository;
     private final UserRepository userRepository;
+    private final CommentLikeRepository commentLikeRepository;
 
     /**
-     * 댓글 목로 조회
+     * 댓글 목록 조회
      */
 
     /**
@@ -59,10 +64,54 @@ public class CommentService {
     /**
      * 관심사 댓글 좋아요
      */
+    @Transactional
+    public CommentLikeDto createCommentLike(UUID commentId, UUID requestUserId) {
+        // 이미 좋아요를 했다면?
+        Optional<CommentLike> foundCommentLike = commentLikeRepository.findByCommentIdAndUserIdWithFetch(
+                commentId, requestUserId);
+        if (foundCommentLike.isPresent()) {
+            return CommentLikeDto.from(foundCommentLike.get());
+        }
+
+        // 좋아요를 누른 댓글과 좋아요를 누른 유저가 존재하는지 검증 - 근데 검증이 목적이면 getReferenceById를 부르는게 비효율적이지 않나?
+        Comment foundComment = getFoundCommentByIdWithUser(commentId);
+        User foundProxyUser = userRepository.getReferenceById(requestUserId);
+        // - 여기서 원래 검증 목적이면 findById를 사용
+        // - 근데 만약 검증 된 사용자의 id라면 이렇게하면 쿼리를 하나 아길 수 있을듯
+
+        // 새로 관계 생성
+        CommentLike newCommentLike = new CommentLike(foundComment, foundProxyUser);
+        CommentLike savedCommentLike = commentLikeRepository.save(newCommentLike);
+
+        // 좋아요 수 증가
+        foundComment.increaseCommentLikeCount();
+
+        log.info("관심사 댓글 좋아요 성공. CommentLikeId: {}", savedCommentLike.getId());
+        return CommentLikeDto.from(savedCommentLike);
+    }
 
     /**
      * 댓글 좋아요 취소
      */
+    @Transactional
+    public void cancelCommentLike(UUID commentId, UUID requestUserId) {
+
+        Optional<CommentLike> foundCommentLike = commentLikeRepository.findByUserIdAndCommentIdWithoutJoin(
+                requestUserId, commentId);
+
+        if (foundCommentLike.isEmpty()) {
+            log.info("해당 댓글에 대한 좋아요 정보가 존재하지 않습니다. RequestUserId: {}", requestUserId);
+            return;
+        }
+
+        commentLikeRepository.delete(foundCommentLike.get());
+
+        // 댓글 수 감소
+        Comment foundComment = getFoundCommentById(commentId);
+        foundComment.decreaseCommentLikeCount();
+
+        log.info("댓글 좋아요 취소 성공. CommentId: {}", foundComment.getId());
+    }
 
     /**
      * 댓글 논리 삭제
@@ -88,8 +137,11 @@ public class CommentService {
 
         foundComment.updateContent(request.content());
 
+        boolean likedByMe = commentLikeRepository.findByUserIdAndCommentIdWithoutJoin(requestUserId,
+                commentId).isPresent();
+
         log.info("댓글 정보 수정 완료. CommentId: {}", foundComment.getId());
-        return CommentDto.from(foundComment, false);
+        return CommentDto.from(foundComment, likedByMe);
         // TODO: 좋아요 관련 로직 작성 후 requestUserId + commentId 기반으로 likedByMe 찾아서 추가
     }
 
