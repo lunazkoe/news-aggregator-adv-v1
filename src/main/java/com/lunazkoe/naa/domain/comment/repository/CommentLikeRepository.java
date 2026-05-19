@@ -1,7 +1,9 @@
 package com.lunazkoe.naa.domain.comment.repository;
 
 import com.lunazkoe.naa.domain.comment.entity.CommentLike;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -25,4 +27,8 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, UUID> 
             @Param("userId") UUID userId,
             @Param("commentId") UUID commentId
     );
+
+    @Query("SELECT cl.comment.id FROM CommentLike cl WHERE cl.user.id = :userId AND cl.comment.id IN :commentIds")
+    Set<UUID> findLikedCommentIdsByUserIdAndCommentIdsIn(@Param("userId") UUID userId,
+            @Param("commentIds") List<UUID> commentIds);
 }

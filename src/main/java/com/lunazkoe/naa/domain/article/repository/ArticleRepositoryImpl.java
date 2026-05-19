@@ -14,6 +14,7 @@ import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -182,7 +183,7 @@ public class ArticleRepositoryImpl implements ArticleRepositoryCustom {
                     LocalDateTime afterDate;
                     try {
                         afterDate = ZonedDateTime.parse(after).toLocalDateTime();
-                    } catch (Exception e) {
+                    } catch (DateTimeParseException e) {
                         afterDate = LocalDateTime.parse(after);
                     }
                     yield isAsc ?

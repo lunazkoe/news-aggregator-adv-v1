@@ -3,10 +3,12 @@ package com.lunazkoe.naa.domain.comment.controller;
 import static com.lunazkoe.naa.global.filter.MDCLoggingFilter.HEADER_USER_ID;
 
 import com.lunazkoe.naa.domain.comment.dto.request.CommentRegisterRequest;
+import com.lunazkoe.naa.domain.comment.dto.request.CommentSearchCondition;
 import com.lunazkoe.naa.domain.comment.dto.request.CommentUpdateRequest;
 import com.lunazkoe.naa.domain.comment.dto.response.CommentDto;
 import com.lunazkoe.naa.domain.comment.dto.response.CommentLikeDto;
 import com.lunazkoe.naa.domain.comment.service.CommentService;
+import com.lunazkoe.naa.global.dto.CursorPageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -14,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,6 +34,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class CommentController {
 
     private final CommentService commentService;
+
+    @Operation(summary = "댓글 목록 조회", description = "조건에 맞는 댓글 목록을 조회합니다.")
+    @GetMapping()
+    @ResponseStatus(HttpStatus.OK)
+    public CursorPageResponse<CommentDto> getComments(
+            @Valid @ModelAttribute CommentSearchCondition condition,
+            @RequestHeader(HEADER_USER_ID) UUID requestUserId) {
+        return commentService.getComments(condition, requestUserId);
+    }
 
     @Operation(summary = "댓글 등록", description = "새로운 댓글을 등록합니다.")
     @PostMapping()

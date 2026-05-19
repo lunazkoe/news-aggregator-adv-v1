@@ -1,21 +1,17 @@
-package com.lunazkoe.naa.domain.interest.dto.request;
+package com.lunazkoe.naa.domain.comment.dto.request;
 
-
-import com.lunazkoe.naa.global.error.DomainException;
-import com.lunazkoe.naa.global.error.GlobalErrorCode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
-import java.util.Map;
+import java.util.UUID;
 
-@Schema(description = "관심사 목록 조회용")
-public record InterestSearchCondition(
-        @Schema(description = "검색어(관심사 이름)", example = "스포츠")
-        String keyword,
+public record CommentSearchCondition(
+        @Schema(description = "기사 ID (특정 기사의 댓글만 조회할 경우)", example = "123e4567-e89b-12d3-a456-426614174000")
+        UUID articleId,
 
-        @Schema(description = "정렬 속성 (name, subscriberCount)", example = "subscriberCount")
-        @Pattern(regexp = "^(name|subscriberCount)$", message = "정렬 기준은 name 또는 subscriberCount만 가능합니다.")
+        @Schema(description = "정렬 속성 (createdAt, likeCount)", example = "createdAt")
+        @Pattern(regexp = "^(createdAt|likeCount)$", message = "정렬 기준은 createdAt 또는 likeCount만 가능합니다.")
         String orderBy,
 
         @Schema(description = "정렬 방향 (ASC, DESC)", example = "DESC")
@@ -37,24 +33,15 @@ public record InterestSearchCondition(
 ) {
 
     // 바인딩 -> 생성자 실행(디폴트 세팅) -> @Valid 검증 실행
-    public InterestSearchCondition {
+    public CommentSearchCondition {
         if (limit == null || limit <= 0) {
             limit = 50;
         }
         if (orderBy == null || orderBy.isBlank()) {
-            orderBy = "subscriberCount";
+            orderBy = "createdAt"; // 댓글의 기본 정렬은 최신순
         }
         if (direction == null || direction.isBlank()) {
             direction = "DESC";
-        }
-
-        if (after != null && !after.isBlank() && "subscriberCount".equals(orderBy)) {
-            try {
-                Long.parseLong(after);
-            } catch (NumberFormatException e) {
-                throw new DomainException(GlobalErrorCode.INVALID_INPUT_VALUE,
-                        Map.of("after", "subscriberCount 정렬 시 after 커서는 반드시 숫자여야 합니다."));
-            }
         }
     }
 }

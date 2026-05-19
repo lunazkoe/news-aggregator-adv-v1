@@ -5,6 +5,7 @@ import com.lunazkoe.naa.domain.article.exception.ArticleErrorCode;
 import com.lunazkoe.naa.domain.article.exception.ArticleException;
 import com.lunazkoe.naa.domain.article.repository.ArticleRepository;
 import com.lunazkoe.naa.domain.comment.dto.request.CommentRegisterRequest;
+import com.lunazkoe.naa.domain.comment.dto.request.CommentSearchCondition;
 import com.lunazkoe.naa.domain.comment.dto.request.CommentUpdateRequest;
 import com.lunazkoe.naa.domain.comment.dto.response.CommentDto;
 import com.lunazkoe.naa.domain.comment.dto.response.CommentLikeDto;
@@ -18,7 +19,11 @@ import com.lunazkoe.naa.domain.user.entity.User;
 import com.lunazkoe.naa.domain.user.exception.UserErrorCode;
 import com.lunazkoe.naa.domain.user.exception.UserException;
 import com.lunazkoe.naa.domain.user.repository.UserRepository;
+import com.lunazkoe.naa.global.dto.CursorPageResponse;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,14 +46,60 @@ public class CommentService {
     /**
      * 댓글 목록 조회
      */
+    @Transactional(readOnly = true)
+    public CursorPageResponse<CommentDto> getComments(CommentSearchCondition condition,
+            UUID requestUserId) {
+        // 해당 기사가 있는지 먼저 확인
+        if (!articleRepository.existsById(condition.articleId())) {
+            throw new ArticleException(ArticleErrorCode.ARTICLE_NOT_FOUND);
+        }
+
+        CursorPageResponse<Comment> pageResponse = commentRepository.searchComments(
+                condition);
+
+        if (pageResponse.content().isEmpty()) {
+            return new CursorPageResponse<>(
+                    Collections.emptyList(),
+                    pageResponse.nextCursor(),
+                    pageResponse.nextAfter(),
+                    pageResponse.size(),
+                    pageResponse.totalElements(),
+                    pageResponse.hasNext()
+            );
+        }
+
+        List<UUID> commentIds = pageResponse.content().stream()
+                .map(Comment::getId)
+                .toList();
+
+        Set<UUID> likedByMeIds = commentLikeRepository.findLikedCommentIdsByUserIdAndCommentIdsIn(
+                requestUserId, commentIds);
+
+        List<CommentDto> comments = pageResponse.content().stream()
+                .map(comment -> {
+                    boolean likedByMe = likedByMeIds.contains(comment.getId());
+                    return CommentDto.from(comment, likedByMe);
+                })
+                .toList();
+
+        log.info("댓글 목록 조회 성공.");
+        return new CursorPageResponse<>(
+                comments,
+                pageResponse.nextCursor(),
+                pageResponse.nextAfter(),
+                pageResponse.size(),
+                pageResponse.totalElements(),
+                pageResponse.hasNext()
+        );
+    }
 
     /**
      * 댓글 등록
      */
     @Transactional
     public CommentDto createComment(CommentRegisterRequest request) {
-        Article foundArticle = getFoundArticleById(request);
-        User foundUser = getFoundUserById(request);
+        Article foundArticle = getFoundArticleById(request.articleId());
+        User foundUser = getFoundUserById(request.userId());
 
         Comment newComment = new Comment(foundArticle, foundUser, request.content());
         Comment savedComment = commentRepository.save(newComment);
@@ -58,7 +109,6 @@ public class CommentService {
 
         log.info("댓글 등록 완료. CommentId: {}", savedComment.getId());
         return CommentDto.from(savedComment, false);
-        // - TODO: 댓글 좋아요 기능 미구현 -> 그래도 최초 생성 시 본인에 의한 좋아요는 false
     }
 
     /**
@@ -142,7 +192,6 @@ public class CommentService {
 
         log.info("댓글 정보 수정 완료. CommentId: {}", foundComment.getId());
         return CommentDto.from(foundComment, likedByMe);
-        // TODO: 좋아요 관련 로직 작성 후 requestUserId + commentId 기반으로 likedByMe 찾아서 추가
     }
 
     /**
@@ -168,13 +217,13 @@ public class CommentService {
                 .orElseThrow(() -> new CommentException(CommentErrorCode.COMMENT_NOT_FOUND));
     }
 
-    private User getFoundUserById(CommentRegisterRequest request) {
-        return userRepository.findById(request.userId())
+    private User getFoundUserById(UUID requestUserId) {
+        return userRepository.findById(requestUserId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
     }
 
-    private Article getFoundArticleById(CommentRegisterRequest request) {
-        return articleRepository.findById(request.articleId())
+    private Article getFoundArticleById(UUID articleId) {
+        return articleRepository.findById(articleId)
                 .orElseThrow(() -> new ArticleException(ArticleErrorCode.ARTICLE_NOT_FOUND));
     }
 }

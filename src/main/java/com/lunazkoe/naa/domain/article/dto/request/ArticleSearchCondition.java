@@ -3,6 +3,7 @@ package com.lunazkoe.naa.domain.article.dto.request;
 import com.lunazkoe.naa.domain.article.entity.Source;
 import com.lunazkoe.naa.global.error.DomainException;
 import com.lunazkoe.naa.global.error.GlobalErrorCode;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
@@ -21,10 +22,14 @@ public record ArticleSearchCondition(
         @Pattern(regexp = "^(publishDate|commentCount|viewCount)$", message = "정렬 기준은 publishDate, commentCount, viewCount 중 하나여야 합니다.")
         String orderBy,                 // 정렬 기준
 
-        @Pattern(regexp = "^(ASC|DESC)$", message = "정렬 방향은 ASC 또는 DESC만 가능합니다.")
-        String direction,               // 정렬 방향
+        @Schema(description = "정렬 방향 (ASC, DESC)", example = "DESC")
+        @Pattern(regexp = "(?i)^(ASC|DESC)$", message = "정렬 방향은 ASC 또는 DESC만 가능합니다.")
+        String direction,
 
-        String cursor,                  // 식별자 커서 (UUID)
+        @Schema(description = "커서 값 (마지막으로 조회된 Comment ID)")
+        @Pattern(regexp = "(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+                message = "유효하지 않은 커서 형식입니다.")
+        String cursor,
         String after,                   // 보조 커서 (날짜, 정수 등)
 
         @Min(value = 1, message = "조회 개수는 1 이상이어야 합니다.")
