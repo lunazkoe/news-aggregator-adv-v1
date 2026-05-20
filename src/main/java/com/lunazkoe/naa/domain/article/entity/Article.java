@@ -10,6 +10,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -23,7 +24,14 @@ import org.hibernate.annotations.SQLRestriction;
 // TODO: sourceUrl, title, summary 등 가변 배열 등 DB의 어떤 걸 사용하는지
 
 @Entity
-@Table(name = "articles")
+@Table(
+        name = "articles", indexes = {
+        @Index(
+                name = "uk_articles_source_url",
+                columnList = "sourceUrl",
+                unique = true
+        )
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @SQLRestriction(IS_DELETED_FALSE_ONLY)
