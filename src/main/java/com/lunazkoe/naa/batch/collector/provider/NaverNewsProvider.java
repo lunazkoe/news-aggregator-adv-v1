@@ -62,7 +62,8 @@ public class NaverNewsProvider implements NewsProvider {
                             item.originallink(),
                             stripHtmlTags(item.title()),
                             parsePubDate(item.pubDate()),
-                            stripHtmlTags(item.description())
+                            stripHtmlTags(item.description()),
+                            interest.getId()
                     ))
                     .toList();
         } catch (Exception e) {

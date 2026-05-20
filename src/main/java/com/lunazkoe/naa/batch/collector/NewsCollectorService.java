@@ -32,7 +32,7 @@ public class NewsCollectorService {
         log.info("[뉴스 수집 배치 시작] 다중 공급자 기반 시간당 뉴스 통합 배치를 시작합니다.");
 
         try {
-            // 근데 관심사 등록된게 너무 많으면? => 이 서비스에서는 하지 고려하지 말자
+            // TODO: 근데 관심사 등록된게 너무 많으면? => 이 서비스에서는 하지 고려하지 말자
             List<Interest> interests = interestRepository.findAll();
             if (interests.isEmpty()) {
                 log.info("[뉴스 수집 배치] 등록된 관심사가 없어 배치를 종료합니다.");

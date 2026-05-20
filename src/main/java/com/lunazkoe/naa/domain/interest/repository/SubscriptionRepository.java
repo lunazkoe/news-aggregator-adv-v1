@@ -24,4 +24,8 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
     @Query(value = "SELECT EXISTS (SELECT 1 FROM subscriptions WHERE interest_id = :interestId AND user_id = :userId)", nativeQuery = true)
     boolean existsInterestIdAndUserId(@Param("interestId") UUID interestId,
             @Param("userId") UUID userId);
+
+    // 특정 관심사를 구독 중인 모든 유저의 ID 목록만 조회함
+    @Query("SELECT s.user.id FROM Subscription s WHERE s.interest.id = :interestId")
+    List<UUID> findUserIdsByInterestId(@Param("interestId") UUID interestId);
 }
