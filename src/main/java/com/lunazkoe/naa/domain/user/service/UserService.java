@@ -29,7 +29,7 @@ public class UserService {
     @Transactional
     public UserDto register(UserRegisterRequest request) {
         // 이메일 중복 확인
-        // TODO: 사용자 논리 삭제 후 같은 이메일로 가입을 하면 현재는 완전히 새로운 계정이 생김 => 추후 논리 삭제 시 같은 이메일로 가입 => 상태 복구로 개선
+        // TODO: 논리 삭제된 유저를 어떻게 해야할까?
         if (userRepository.existsByEmail(request.email())) {
             throw new UserException(UserErrorCode.EMAIL_DUPLICATION);
         }
@@ -72,8 +72,6 @@ public class UserService {
 
         User foundUser = getFoundUserById(userId);
 
-        // TODO: 사용자 논리 삭제 권한 없음 처리
-
         foundUser.softDelete(); // 더티 체크
 
         // TODO: 논리 삭제 시 연관관계들에서 일어날 일들 처리
@@ -88,8 +86,6 @@ public class UserService {
     @Transactional
     public UserDto updateNickname(UUID userId, UserUpdateRequest request) {
         User foundUser = getFoundUserById(userId);
-
-        // TODO: 사용자 정보 수정 권한 없음 처리
 
         foundUser.updateNickname(request.nickname());
 
@@ -109,8 +105,6 @@ public class UserService {
     public void hardDelete(UUID userId) {
 
         User foundUser = getFoundUserById(userId);
-
-        // TODO: 사용자 물리 삭제 권한 없음 처리
 
         userRepository.delete(foundUser);
         // - deleteById를 하지 않는 이유는 굳이 select를 한 번 더 할 필요가 없음

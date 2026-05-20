@@ -11,6 +11,7 @@ import com.lunazkoe.naa.domain.interest.exception.InterestErrorCode;
 import com.lunazkoe.naa.domain.interest.exception.InterestException;
 import com.lunazkoe.naa.domain.interest.repository.InterestRepository;
 import com.lunazkoe.naa.domain.interest.repository.SubscriptionRepository;
+import com.lunazkoe.naa.domain.interest.utils.InterestSimilarityChecker;
 import com.lunazkoe.naa.domain.user.entity.User;
 import com.lunazkoe.naa.domain.user.repository.UserRepository;
 import com.lunazkoe.naa.global.dto.CursorPageResponse;
@@ -42,8 +43,8 @@ public class InterestService {
     @Transactional(readOnly = true)
     public CursorPageResponse<InterestDto> searchInterests(InterestSearchCondition condition,
             UUID requestUserId) {
-        CursorPageResponse<Interest> pageResponse = interestRepository.searchInterests(
-                condition);
+
+        CursorPageResponse<Interest> pageResponse = interestRepository.searchInterests(condition);
 
         // 아무것도 없는 방어로직을 짜는 이유
         // - 물어볼 ID가 없는데 DB에 존재하는지 물어보는 것 자체가 DB 네트워크 낭비
@@ -72,10 +73,6 @@ public class InterestService {
         List<InterestDto> interests = pageResponse.content().stream()
                 .map(interest -> {
                     boolean subscribedByMe = subscribedInterestIds.contains(interest.getId());
-//                    boolean subscribedByMe = subscriptionRepository.existsByInterestIdAndUserId(
-//                            interest.getId(), requestUserId);
-//                    boolean subscribedByMe = subscriptionRepository.existsInterestIdAndUserId(
-//                            interest.getId(), requestUserId);
                     return InterestDto.from(interest, subscribedByMe);
                 })
                 .toList();
@@ -97,14 +94,24 @@ public class InterestService {
      */
     @Transactional
     public InterestDto createInterest(InterestRegisterRequest request) {
-        // TODO: 유사 관심사 중복 처리 - 현재는 일부러 중복 허용
+        // 모든 관심사 조회
+        List<Interest> allInterests = interestRepository.findAll();
+
+        // 유사한 관심사 검사
+        List<String> existingInterestNames = allInterests.stream()
+                .map(Interest::getName)
+                .toList();
+
+        if (InterestSimilarityChecker.hasSimilarName(request.name(), existingInterestNames)) {
+            log.warn("유사한 관심사가 존재합니다. RequestName: {}", request.name());
+            throw new InterestException(InterestErrorCode.SIMILAR_INTEREST_EXISTS);
+        }
 
         Interest newInterest = new Interest(request.name(), request.keywords());
         Interest savedInterest = interestRepository.save(newInterest);
 
         log.info("관심사 등록 완료. InterestId: {}", savedInterest.getId());
         return InterestDto.from(savedInterest, false);
-        // - 관심사를 등록을 했을 경우 무조건 처음에는 구독이 되어있지 않으므로 false
     }
 
     /**
