@@ -15,6 +15,8 @@ import com.lunazkoe.naa.domain.comment.exception.CommentErrorCode;
 import com.lunazkoe.naa.domain.comment.exception.CommentException;
 import com.lunazkoe.naa.domain.comment.repository.CommentLikeRepository;
 import com.lunazkoe.naa.domain.comment.repository.CommentRepository;
+import com.lunazkoe.naa.domain.notification.entity.ResourceType;
+import com.lunazkoe.naa.domain.notification.event.NotificationCreateEvent;
 import com.lunazkoe.naa.domain.user.entity.User;
 import com.lunazkoe.naa.domain.user.exception.UserErrorCode;
 import com.lunazkoe.naa.domain.user.exception.UserException;
@@ -27,6 +29,7 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +42,7 @@ public class CommentService {
     private final ArticleRepository articleRepository;
     private final UserRepository userRepository;
     private final CommentLikeRepository commentLikeRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 댓글 목록 조회
@@ -123,16 +127,36 @@ public class CommentService {
 
         // 좋아요를 누른 댓글과 좋아요를 누른 유저가 존재하는지 검증 - 근데 검증이 목적이면 getReferenceById를 부르는게 비효율적이지 않나?
         Comment foundComment = getFoundCommentByIdWithUser(commentId);
-        User foundProxyUser = userRepository.getReferenceById(requestUserId);
+        User foundUser = getFoundUserById(requestUserId);
         // - 여기서 원래 검증 목적이면 findById를 사용
         // - 근데 만약 검증 된 사용자의 id라면 이렇게하면 쿼리를 하나 아길 수 있을듯
 
         // 새로 관계 생성
-        CommentLike newCommentLike = new CommentLike(foundComment, foundProxyUser);
+        CommentLike newCommentLike = new CommentLike(foundComment, foundUser);
         CommentLike savedCommentLike = commentLikeRepository.save(newCommentLike);
 
         // 좋아요 수 증가
         foundComment.increaseCommentLikeCount();
+
+        // TODO: 댓글 좋아요 알림
+        // 내가 누른 댓글에 좋아요를 누른 경우는 제외
+        if (!foundComment.getUser().getId().equals(requestUserId)) {
+            StringBuilder sb = new StringBuilder();
+            String content = sb.append("[")
+                    .append(foundUser.getNickname())
+                    .append("]님이 나의 댓글을 좋아합니다.")
+                    .toString();
+
+            eventPublisher.publishEvent(new NotificationCreateEvent(
+                    foundComment.getUser().getId(),
+                    content,
+                    ResourceType.COMMENT,
+                    foundComment.getId()
+            ));
+            log.info(
+                    "[Event Published] NotificationCreateEvent for Comment Like. receiverId: {}, commentId: {}",
+                    foundComment.getUser().getId(), foundComment.getId());
+        }
 
         log.info("관심사 댓글 좋아요 성공. CommentLikeId: {}", savedCommentLike.getId());
         return CommentLikeDto.from(savedCommentLike);

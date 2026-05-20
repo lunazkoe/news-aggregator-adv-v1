@@ -3,9 +3,11 @@ package com.lunazkoe.naa.domain.notification.service;
 import com.lunazkoe.naa.domain.notification.dto.request.NotificationSearchCondition;
 import com.lunazkoe.naa.domain.notification.dto.response.NotificationDto;
 import com.lunazkoe.naa.domain.notification.entity.Notification;
+import com.lunazkoe.naa.domain.notification.event.NotificationCreateEvent;
 import com.lunazkoe.naa.domain.notification.exception.NotificationErrorCode;
 import com.lunazkoe.naa.domain.notification.exception.NotificationException;
 import com.lunazkoe.naa.domain.notification.repository.NotificationRepository;
+import com.lunazkoe.naa.domain.user.entity.User;
 import com.lunazkoe.naa.domain.user.exception.UserErrorCode;
 import com.lunazkoe.naa.domain.user.exception.UserException;
 import com.lunazkoe.naa.domain.user.repository.UserRepository;
@@ -84,5 +86,29 @@ public class NotificationService {
         foundNotification.confirm();
 
         log.info("알림 확인 요청 완료. UserId: {}", requestUserId);
+    }
+
+    @Transactional
+    public void createNotification(NotificationCreateEvent event) {
+        // 수신자 검증: 회원이 탈퇴했거나 없는 경우 알림 생성 무시
+        User receiver = userRepository.findById(event.receiverId())
+                .orElse(null);
+
+        if (receiver == null) {
+            log.warn("[Notification] 수신자를 찾을 수 없거나 탈퇴한 회원입니다. receiverId: {}", event.receiverId());
+            return;
+        }
+
+        // 알림 엔티티 생성
+        Notification newNotification = new Notification(
+                receiver,
+                event.content(),
+                event.resourceType(),
+                event.resourceId()
+        );
+
+        Notification savedNotification = notificationRepository.save(newNotification);
+        log.info("[Notification Created] 알림 저장 완료. notificationId: {}, receiverId: {}",
+                savedNotification.getId(), savedNotification.getUser().getId());
     }
 }
